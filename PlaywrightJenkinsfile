@@ -47,7 +47,7 @@ pipeline {
             post {
                 always {
                     // แก้ path ให้ตรงกับที่ Playwright สร้าง XML จริงๆ
-                    junit allowEmptyResults: true, testResults: 'results.xml'
+                    junit allowEmptyResults: true, testResults: 'test-results/results.xml'
                 }
             }
         }
@@ -65,7 +65,7 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'results.xml'
+                    junit allowEmptyResults: true, testResults: 'test-results/results.xml'
                 }
             }
         }
