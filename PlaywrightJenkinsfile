@@ -38,15 +38,10 @@ pipeline {
                 expression { params.TEST_SUITE == 'all' || params.TEST_SUITE == 'api' }
             }
             steps {
-                sh '''
-                    npx playwright test tests/api \
-                        --reporter=html,junit \
-                        --output=test-results/api
-                '''
+                sh 'npx playwright test tests/api'
             }
             post {
                 always {
-                    // แก้ path ให้ตรงกับที่ Playwright สร้าง XML จริงๆ
                     junit allowEmptyResults: true, testResults: 'test-results/results.xml'
                 }
             }
@@ -57,11 +52,7 @@ pipeline {
                 expression { params.TEST_SUITE == 'all' || params.TEST_SUITE == 'web' }
             }
             steps {
-                sh '''
-                    npx playwright test tests/web \
-                        --reporter=html,junit \
-                        --output=test-results/web
-                '''
+                sh 'npx playwright test tests/web'
             }
             post {
                 always {
