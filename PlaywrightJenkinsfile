@@ -1,0 +1,93 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'TEST_SUITE',
+            choices: ['all', 'api', 'web'],
+            description: 'Select test suite to run'
+        )
+        string(
+            name: 'API_BASE_URL',
+            defaultValue: 'https://automationexercise.com',
+            description: 'API Base URL'
+        )
+    }
+
+    environment {
+        API_BASE_URL = "${params.API_BASE_URL}"
+        PLAYWRIGHT_BROWSERS_PATH = '/var/jenkins_home/.cache/ms-playwright'
+    }
+
+    stages {
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Install Playwright Browsers') {
+            steps {
+                sh 'npx playwright install --with-deps chromium'
+            }
+        }
+
+        stage('Run API Tests') {
+            when {
+                expression { params.TEST_SUITE == 'all' || params.TEST_SUITE == 'api' }
+            }
+            steps {
+                sh '''
+                    npx playwright test tests/api \
+                        --reporter=html,junit \
+                        --output=test-results/api
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'test-results/api/**/*.xml'
+                }
+            }
+        }
+
+        stage('Run Web Tests') {
+            when {
+                expression { params.TEST_SUITE == 'all' || params.TEST_SUITE == 'web' }
+            }
+            steps {
+                sh '''
+                    npx playwright test tests/web \
+                        --reporter=html,junit \
+                        --output=test-results/web
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'test-results/web/**/*.xml'
+                }
+            }
+        }
+
+        stage('Archive Report') {
+            steps {
+                archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished with status: ${currentBuild.currentResult}"
+        }
+        success {
+            echo '✅ All tests passed!'
+        }
+        unstable {
+            echo '⚠️ Some tests failed. Check the report.'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check console output.'
+        }
+    }
+}
